@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { Package, ShoppingBag, TrendingUp, Wallet, Star, Users, TicketPercent, Clock3 } from "lucide-react";
+import {
+  Package,
+  ShoppingBag,
+  TrendingUp,
+  Wallet,
+  Star,
+  Users,
+  TicketPercent,
+  Clock3,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase/client";
 import { Loader } from "@/components/ui/Loader";
@@ -35,6 +45,8 @@ type SalesPoint = {
   orders: number;
 };
 
+type StatCardItem = [string, string, LucideIcon];
+
 function formatCurrency(value: number) {
   return `Rs ${value.toLocaleString()}`;
 }
@@ -58,7 +70,9 @@ function buildSalesSeries(orders: Order[]): SalesPoint[] {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
     const key = date.toISOString().slice(0, 10);
-    const sameDayOrders = orders.filter((order) => order.createdAt.slice(0, 10) === key && order.status !== "cancelled");
+    const sameDayOrders = orders.filter(
+      (order) => order.createdAt.slice(0, 10) === key && order.status !== "cancelled"
+    );
 
     points.push({
       label: formatDateShort(date.toISOString()),
@@ -114,9 +128,13 @@ export default function DashboardPage() {
           draftProducts: storeProducts.filter((product) => product.status === "draft").length,
           featuredProducts: storeProducts.filter((product) => product.featured).length,
           orders: storeOrders.length,
-          pendingOrders: storeOrders.filter((order) => ["pending", "confirmed", "processing"].includes(order.status)).length,
+          pendingOrders: storeOrders.filter((order) =>
+            ["pending", "confirmed", "processing"].includes(order.status)
+          ).length,
           deliveredOrders: storeOrders.filter((order) => order.status === "delivered").length,
-          revenue: storeOrders.filter((order) => order.status !== "cancelled").reduce((sum, order) => sum + order.total, 0),
+          revenue: storeOrders
+            .filter((order) => order.status !== "cancelled")
+            .reduce((sum, order) => sum + order.total, 0),
         });
       }
 
@@ -177,6 +195,20 @@ export default function DashboardPage() {
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4);
   }, [products]);
 
+  const primaryStats: StatCardItem[] = [
+    ["Total Revenue", formatCurrency(stats.revenue), Wallet],
+    ["Orders", String(stats.orders), ShoppingBag],
+    ["Products", String(stats.products), Package],
+    ["Pending Orders", String(stats.pendingOrders), Clock3],
+  ];
+
+  const secondaryStats: StatCardItem[] = [
+    ["Avg order value", formatCurrency(averageOrderValue), TrendingUp],
+    ["Featured products", String(stats.featuredProducts), Star],
+    ["Unique customers", String(uniqueCustomers), Users],
+    ["Coupon usage", String(couponUsageCount), TicketPercent],
+  ];
+
   if (checking) {
     return <Loader label="Loading your dashboard..." />;
   }
@@ -201,49 +233,35 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          ["Total Revenue", formatCurrency(stats.revenue), Wallet],
-          ["Orders", String(stats.orders), ShoppingBag],
-          ["Products", String(stats.products), Package],
-          ["Pending Orders", String(stats.pendingOrders), Clock3],
-        ].map(([label, value, Icon]) => {
-          const LucideIcon = Icon as typeof Wallet;
-          return (
-            <div key={label} className="card p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm text-slate-500">{label}</p>
-                  <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
-                </div>
-                <div className="rounded-2xl bg-pink-50 p-3 text-pink-600">
-                  <LucideIcon className="h-5 w-5" />
-                </div>
+        {primaryStats.map(([label, value, Icon]) => (
+          <div key={label} className="card p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm text-slate-500">{label}</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
+              </div>
+              <div className="rounded-2xl bg-pink-50 p-3 text-pink-600">
+                <Icon className="h-5 w-5" />
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          ["Avg order value", formatCurrency(averageOrderValue), TrendingUp],
-          ["Featured products", String(stats.featuredProducts), Star],
-          ["Unique customers", String(uniqueCustomers), Users],
-          ["Coupon usage", String(couponUsageCount), TicketPercent],
-        ].map(([label, value, Icon]) => {
-          const LucideIcon = Icon as typeof Wallet;
-          return (
-            <div key={label} className="card p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm text-slate-500">{label}</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
-                </div>
-                <div className="rounded-2xl bg-slate-100 p-3 text-slate-700"><LucideIcon className="h-5 w-5" /></div>
+        {secondaryStats.map(([label, value, Icon]) => (
+          <div key={label} className="card p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm text-slate-500">{label}</p>
+                <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-100 p-3 text-slate-700">
+                <Icon className="h-5 w-5" />
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)]">
@@ -251,14 +269,25 @@ export default function DashboardPage() {
           <div className="card p-6">
             <h3 className="text-lg font-semibold text-slate-900">Welcome to your seller dashboard</h3>
             <p className="mt-2 max-w-3xl text-slate-600">
-              Phase 8 is now focused on coupons, featured products, customer accounts, delivery logic, order tracking, and better analytics.
+              Phase 8 is now focused on coupons, featured products, customer accounts, delivery logic, order
+              tracking, and better analytics.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/app/products" className="btn-primary">Manage Products</Link>
-              {storeSlug ? <Link href={`/store/${storeSlug}`} className="btn-secondary">View Storefront</Link> : null}
-              <Link href="/app/orders" className="btn-secondary">Manage Orders</Link>
-              <Link href="/app/settings" className="btn-secondary">Store Settings</Link>
+              <Link href="/app/products" className="btn-primary">
+                Manage Products
+              </Link>
+              {storeSlug ? (
+                <Link href={`/store/${storeSlug}`} className="btn-secondary">
+                  View Storefront
+                </Link>
+              ) : null}
+              <Link href="/app/orders" className="btn-secondary">
+                Manage Orders
+              </Link>
+              <Link href="/app/settings" className="btn-secondary">
+                Store Settings
+              </Link>
             </div>
           </div>
 
@@ -278,7 +307,12 @@ export default function DashboardPage() {
                     <div className="flex h-full items-end justify-center">
                       <div
                         className="w-full rounded-t-2xl bg-gradient-to-t from-pink-600 to-fuchsia-400"
-                        style={{ height: `${Math.max((point.revenue / maxRevenue) * 100, point.revenue > 0 ? 12 : 4)}%` }}
+                        style={{
+                          height: `${Math.max(
+                            (point.revenue / maxRevenue) * 100,
+                            point.revenue > 0 ? 12 : 4
+                          )}%`,
+                        }}
                         title={`${point.label}: ${formatCurrency(point.revenue)} from ${point.orders} orders`}
                       />
                     </div>
@@ -294,7 +328,9 @@ export default function DashboardPage() {
             <div className="card p-6">
               <span className="badge">Top items</span>
               <h3 className="mt-3 text-xl font-bold text-slate-900">Top selling products</h3>
-              <p className="mt-2 text-sm text-slate-500">See which products are driving the most quantity and revenue.</p>
+              <p className="mt-2 text-sm text-slate-500">
+                See which products are driving the most quantity and revenue.
+              </p>
 
               <div className="mt-6 space-y-4">
                 {topProducts.length > 0 ? (
@@ -302,7 +338,9 @@ export default function DashboardPage() {
                     <div key={item.id} className="rounded-2xl border border-slate-200 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-pink-50 font-semibold text-pink-700">#{index + 1}</div>
+                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-pink-50 font-semibold text-pink-700">
+                            #{index + 1}
+                          </div>
                           <div>
                             <p className="font-semibold text-slate-900">{item.name}</p>
                             <p className="mt-1 text-sm text-slate-500">{item.quantity} items sold</p>
@@ -313,7 +351,9 @@ export default function DashboardPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">Top selling items will appear once customers place more orders.</div>
+                  <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">
+                    Top selling items will appear once customers place more orders.
+                  </div>
                 )}
               </div>
             </div>
@@ -325,19 +365,28 @@ export default function DashboardPage() {
                 <span className="badge">Recent activity</span>
                 <h3 className="mt-3 text-xl font-bold text-slate-900">Recent orders</h3>
               </div>
-              <Link href="/app/orders" className="text-sm font-medium text-pink-600 hover:text-pink-700">View all orders</Link>
+              <Link href="/app/orders" className="text-sm font-medium text-pink-600 hover:text-pink-700">
+                View all orders
+              </Link>
             </div>
 
             <div className="mt-6 space-y-3">
               {recentOrders.length > 0 ? (
                 recentOrders.map((order) => (
-                  <div key={order.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div
+                    key={order.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <div>
                       <div className="flex flex-wrap items-center gap-3">
                         <p className="font-semibold text-slate-900">Order #{order.id.slice(0, 8)}</p>
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium capitalize text-slate-700">{order.status}</span>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium capitalize text-slate-700">
+                          {order.status}
+                        </span>
                       </div>
-                      <p className="mt-2 text-sm text-slate-500">{order.customerName} • {formatDateTime(order.createdAt)}</p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        {order.customerName} • {formatDateTime(order.createdAt)}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs uppercase tracking-wide text-slate-400">Total</p>
@@ -346,7 +395,9 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">Your recent orders will appear here once customers start buying.</div>
+                <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">
+                  Your recent orders will appear here once customers start buying.
+                </div>
               )}
             </div>
           </div>
@@ -375,12 +426,21 @@ export default function DashboardPage() {
             <span className="badge">Category mix</span>
             <h3 className="mt-3 text-xl font-bold text-slate-900">Product categories</h3>
             <div className="mt-6 space-y-3">
-              {categoryBreakdown.length > 0 ? categoryBreakdown.map(([category, count]) => (
-                <div key={category} className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
-                  <span className="font-medium text-slate-900">{category}</span>
-                  <span className="text-sm text-slate-500">{count} products</span>
+              {categoryBreakdown.length > 0 ? (
+                categoryBreakdown.map(([category, count]) => (
+                  <div
+                    key={category}
+                    className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3"
+                  >
+                    <span className="font-medium text-slate-900">{category}</span>
+                    <span className="text-sm text-slate-500">{count} products</span>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">
+                  Add products to see category insights.
                 </div>
-              )) : <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">Add products to see category insights.</div>}
+              )}
             </div>
           </div>
         </div>
