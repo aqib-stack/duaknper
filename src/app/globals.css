@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: none;
+}
+
+.container-app {
+  @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.card {
+  @apply rounded-2xl border border-slate-200 bg-white shadow-soft;
+}
+
+.input {
+  @apply w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-pink-400 focus:ring-2 focus:ring-pink-100;
+  padding-left: 40px;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-xl bg-pink-600 px-5 py-3 font-medium text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 font-medium text-slate-700 transition hover:bg-slate-50;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full bg-pink-50 px-3 py-1 text-xs font-medium text-pink-700;
+}
+
+.shadow-soft {
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+section > div >h3.text-2xl.font-bold.text-slate-900 {
+    text-transform: capitalize;
+}
