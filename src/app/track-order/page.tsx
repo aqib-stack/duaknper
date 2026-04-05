@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CircleCheckBig,
@@ -24,7 +24,7 @@ const iconMap: Record<Order["status"], LucideIcon> = {
   completed: CircleCheckBig,
 };
 
-export default function TrackOrderPage() {
+function TrackOrderContent() {
   const searchParams = useSearchParams();
   const [orderId, setOrderId] = useState(searchParams.get("orderId") || "");
   const [phone, setPhone] = useState(searchParams.get("phone") || "");
@@ -50,11 +50,13 @@ export default function TrackOrderPage() {
   }
 
   useEffect(() => {
-    if (orderId && phone) {
-      lookupOrder(orderId, phone);
+    const initialOrderId = searchParams.get("orderId") || "";
+    const initialPhone = searchParams.get("phone") || "";
+
+    if (initialOrderId && initialPhone) {
+      void lookupOrder(initialOrderId, initialPhone);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -199,5 +201,22 @@ export default function TrackOrderPage() {
         </div>
       ) : null}
     </main>
+  );
+}
+
+export default function TrackOrderPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="container-app py-12">
+          <div className="card mx-auto max-w-2xl p-6">
+            <h1 className="text-2xl font-bold text-slate-900">Track your order</h1>
+            <p className="mt-2 text-slate-600">Loading order tracking...</p>
+          </div>
+        </main>
+      }
+    >
+      <TrackOrderContent />
+    </Suspense>
   );
 }
